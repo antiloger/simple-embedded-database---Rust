@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use chrono::{Utc, DateTime};
 
-
+#[derive(Debug)]
 pub enum DBERROR {
     InsertError,
     UpdateError,
@@ -63,6 +63,15 @@ impl Database {
         self.database.insert(dbtype.name.clone(), dbtype);
         Ok(())
     }
+
+    pub fn get_dbtype(&mut self, name: String) -> Result<&mut DBtypes, DBERROR> {
+        if let Some(dbtype) = self.database.get_mut(&name) {
+            Ok(dbtype)
+        } else {
+            Err(DBERROR::SelectError)
+        }
+    }
+    
 }
 
 impl DBtypes {
@@ -93,6 +102,14 @@ impl DBtypes {
     pub fn search_table(&self, name: String) -> Result<&Table, DBERROR> {
         if self.tables.contains_key(&name) {
             Ok(self.tables.get(&name).unwrap())
+        } else {
+            Err(DBERROR::SelectError)
+        }
+    }
+
+    pub fn get_table(&mut self, name: String) -> Result<&mut Table, DBERROR> {
+        if let Some(table) = self.tables.get_mut(&name) {
+            Ok(table)
         } else {
             Err(DBERROR::SelectError)
         }
@@ -131,4 +148,6 @@ impl Table {
             Err(DBERROR::UpdateError)
         }
     }
+
+    
 }
