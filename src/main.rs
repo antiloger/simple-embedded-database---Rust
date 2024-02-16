@@ -1,5 +1,6 @@
 use RDB::{DBtypes, Database, Table, Datatypes};
 
+
 fn main(){
     let mut db = Database::new("test".to_string());
 
@@ -53,5 +54,8 @@ fn main(){
 
     let rowdata = tableRes1.search_row(1).unwrap();
     println!("{:?}", rowdata);
+
+    let rowdata1 = tableRes1.search_by_column("name", Datatypes::Strings("res1".to_string())).unwrap();
+    println!("{:?}", rowdata1);
 
 }

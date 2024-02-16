@@ -1,5 +1,3 @@
-
-
 use std::collections::HashMap;
 use chrono::{Utc, DateTime};
 
@@ -14,7 +12,7 @@ pub enum DBERROR {
     NoDataError,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Datatypes {
     Strings(String),
     Integers(i32),
@@ -117,14 +115,30 @@ impl DBtypes {
 }
 
 impl Table {
-    pub fn new(name: String, node: String, fields: Vec<(String, Datatypes)>) -> Table {
+    pub fn new(name: String, node: String) -> Table {
         Table {
             name,
             node,
-            fields,
+            fields: Vec::new(),
             rows: Vec::new(),
             config: Vec::new(),
         }
+    }
+
+    pub fn add_field(&mut self, field: (String, Datatypes)) -> Result<(), DBERROR> {
+        if self.fields.contains(&field) {
+            return Err(DBERROR::InsertError);
+        }
+        self.fields.push(field);
+        Ok(())
+    }
+
+    pub fn add_config(&mut self, config: (String, String)) -> Result<(), DBERROR> {
+        if self.config.contains(&config) {
+            return Err(DBERROR::InsertError);
+        }
+        self.config.push(config);
+        Ok(())
     }
 
     pub fn search_row(&self, index: usize) -> Result<Vec<Datatypes>, DBERROR> {
@@ -134,6 +148,20 @@ impl Table {
             Err(DBERROR::SelectError)
         }
     }
+
+    pub fn search_by_column(&self, columnname: &str, item: Datatypes) -> Result<Vec<Datatypes>, DBERROR>{
+        if let Some(index) = self.fields.iter().position(|(s, _)| s == columnname) {
+            for row in &self.rows {
+                if row[index] == item {
+                    return Ok(row.clone());
+                }
+            }
+            Err(DBERROR::NoDataError)
+        } else {
+            Err(DBERROR::SelectError)
+        }
+    }
+
 
     pub fn insert_row(&mut self, row: Vec<Datatypes>) -> Result<(), DBERROR> {
         self.rows.push(row);
@@ -148,6 +176,7 @@ impl Table {
             Err(DBERROR::UpdateError)
         }
     }
+
 
     
 }
