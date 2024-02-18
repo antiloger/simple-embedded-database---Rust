@@ -30,13 +30,13 @@ pub enum Datatypes {
 pub struct Database {
     name: String,
     create_time: DateTime<Utc>,
-    database: HashMap<String, DBtypes>,
+    pub database: HashMap<String, DBtypes>,
 }
 
 pub struct DBtypes {
     name: String,
     numoftables: u32,
-    tables: HashMap<String, Table>,
+    pub tables: HashMap<String, Table>,
     info: Vec<(String, String)>,
 }
 
@@ -44,15 +44,15 @@ pub struct Table {
     name: String,
     node: String,
     numofcolumns: u32,
-    fields: HashMap<String, ColumnGroup>,
+    pub fields: HashMap<String, ColumnGroup>,
     config: Vec<(String, String)>,
 }
 
 pub struct ColumnGroup {
     name: String,
     numofcolumns: u32,
-    feilds: Vec<(String, Datatypes)>,
-    columns: Vec<Vec<Datatypes>>,
+    pub feilds: Vec<(String, Datatypes)>,
+    pub columns: Vec<Vec<Datatypes>>,
 }
 
 impl Database {
@@ -64,16 +64,19 @@ impl Database {
         }
     }
 
-    pub fn get_info(&self) -> Vec<(String, String)>{
-        let numoftypes  = self.database.len();
-        let totalnumtables = self.database.iter().fold(0, |acc, (_, dbtype)| acc + dbtype.numoftables);
+    pub fn get_info(&self) -> Vec<(String, String)> {
+        let numoftypes = self.database.len();
+        let totalnumtables = self
+            .database
+            .iter()
+            .fold(0, |acc, (_, dbtype)| acc + dbtype.numoftables);
 
         return vec![
             ("name".to_string(), self.name.clone()),
             ("create_time".to_string(), self.create_time.to_string()),
             ("numoftypes".to_string(), numoftypes.to_string()),
             ("totalnumtables".to_string(), totalnumtables.to_string()),
-        ]
+        ];
     }
 
     pub fn addtype(&mut self, dbtype: DBtypes) -> DBResult<&DBtypes> {
@@ -82,7 +85,7 @@ impl Database {
         }
         let dbtypename = dbtype.name.clone();
         self.database.insert(dbtype.name.clone(), dbtype);
-        
+
         if let Some(refdbtype) = self.database.get(&dbtypename) {
             Ok(refdbtype)
         } else {
@@ -127,13 +130,12 @@ impl DBtypes {
         let tablename = table.name.clone();
         self.tables.insert(table.name.clone(), table);
         self.numoftables += 1;
-        
+
         if let Some(reftable) = self.tables.get(&tablename) {
             Ok(reftable)
         } else {
             Err(DBERROR::InsertError)
         }
-
     }
 
     pub fn add_config(&mut self, config: (String, String)) -> DBResult<()> {
@@ -172,16 +174,22 @@ impl Table {
         }
     }
 
-    pub fn get_info(&self) -> Vec<(String, String)>{
+    pub fn get_info(&self) -> Vec<(String, String)> {
         let numofcolumngroups = self.fields.len();
-        let totalnumcolumns = self.fields.iter().fold(0, |acc, (_, column)| acc + column.numofcolumns);
+        let totalnumcolumns = self
+            .fields
+            .iter()
+            .fold(0, |acc, (_, column)| acc + column.numofcolumns);
 
         return vec![
             ("name".to_string(), self.name.clone()),
             ("node".to_string(), self.node.clone()),
-            ("numofcolumngroups".to_string(), numofcolumngroups.to_string()),
+            (
+                "numofcolumngroups".to_string(),
+                numofcolumngroups.to_string(),
+            ),
             ("totalnumcolumns".to_string(), totalnumcolumns.to_string()),
-        ]
+        ];
     }
 
     pub fn add_columngroup(&mut self, column: ColumnGroup) -> DBResult<&mut ColumnGroup> {
@@ -192,7 +200,7 @@ impl Table {
         let columngname = column.name.clone();
         self.fields.insert(column.name.to_string(), column);
         self.numofcolumns += 1;
-        
+
         if let Some(refcolumn) = self.fields.get_mut(&columngname) {
             Ok(refcolumn)
         } else {
@@ -213,9 +221,9 @@ impl Table {
         Ok(())
     }
 
-    pub fn search_columngroup(&self, name: String) -> DBResult<&ColumnGroup> {
+    pub fn search_columngroup(&mut self, name: String) -> DBResult<&mut ColumnGroup> {
         if self.fields.contains_key(&name) {
-            Ok(self.fields.get(&name).unwrap())
+            Ok(self.fields.get_mut(&name).unwrap())
         } else {
             Err(DBERROR::SelectError)
         }
@@ -262,7 +270,12 @@ impl ColumnGroup {
         Ok(())
     }
 
-    pub fn update_row(&mut self, columnname: &str, item: Datatypes, row: Vec<Datatypes>) -> DBResult<()> {
+    pub fn update_row(
+        &mut self,
+        columnname: &str,
+        item: Datatypes,
+        row: Vec<Datatypes>,
+    ) -> DBResult<()> {
         if let Some(index) = self.feilds.iter().position(|(s, _)| s == columnname) {
             for (i, column) in self.columns.iter_mut().enumerate() {
                 if column[index] == item {
@@ -292,13 +305,24 @@ impl ColumnGroup {
     }
 
     pub fn search_row(&self, columname: &str, item: Datatypes) -> DBResult<Vec<Datatypes>> {
-        if let Some(index) = self.feilds.iter().position(|(s, _)| s == columname){
+        if let Some(index) = self.feilds.iter().position(|(s, _)| s == columname) {
             for row in self.columns.iter() {
                 if row[index] == item {
                     return Ok(row.clone());
                 }
             }
             return Err(DBERROR::NoDataError);
+        }
+        Err(DBERROR::SelectError)
+    }
+
+    pub fn get_column(&self, column: String) -> DBResult<Vec<Datatypes>> {
+        if let Some(index) = self.feilds.iter().position(|(s, _)| s == &column) {
+            let mut result = Vec::new();
+            for row in self.columns.iter() {
+                result.push(row[index].clone());
+            }
+            return Ok(result);
         }
         Err(DBERROR::SelectError)
     }
@@ -344,3 +368,4 @@ pub fn create_columngroup_set(table: &mut Table, columngroupname: Vec<String>) -
 
     Ok(())
 }
+
