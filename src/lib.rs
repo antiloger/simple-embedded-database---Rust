@@ -34,14 +34,14 @@ pub struct Database {
 }
 
 pub struct DBtypes {
-    name: String,
+    pub name: String,
     numoftables: u32,
     pub tables: HashMap<String, Table>,
     info: Vec<(String, String)>,
 }
 
 pub struct Table {
-    name: String,
+    pub name: String,
     node: String,
     numofcolumns: u32,
     pub fields: HashMap<String, ColumnGroup>,
@@ -49,7 +49,7 @@ pub struct Table {
 }
 
 pub struct ColumnGroup {
-    name: String,
+    pub name: String,
     numofcolumns: u32,
     pub feilds: Vec<(String, Datatypes)>,
     pub columns: Vec<Vec<Datatypes>>,
@@ -266,6 +266,7 @@ impl ColumnGroup {
         if let Err(e) = self.validate_row(&row) {
             return Err(e);
         }
+        //println!("{:?}", row);
         self.columns.push(row);
         Ok(())
     }
@@ -346,7 +347,8 @@ impl Datatypes {
 
 pub fn create_dbtype_set(database: &mut Database, dbtypename: Vec<String>) -> DBResult<()> {
     for dbtype in dbtypename {
-        database.create_type(dbtype)?;
+        let t1 = database.create_type(dbtype)?;
+        println!("{:?}", t1.name);
     }
 
     Ok(())

@@ -44,8 +44,11 @@ pub fn add_dummy_data(database: &mut Database) -> DBResult<()> {
     let mut rng = rand::thread_rng();
 
     for dbtype in database.database.values_mut() {
+        //println!("DBType: {}", dbtype.name);
         for table in dbtype.tables.values_mut() {
+            //println!("Table: {}", table.name);
             for columngroup in table.fields.values_mut() {
+                //println!("ColumnGroup: {}", columngroup.name);
                 for _ in 0..100 {
                     let mut row = Vec::new();
                     for (_, datatype) in &columngroup.feilds {
@@ -61,7 +64,9 @@ pub fn add_dummy_data(database: &mut Database) -> DBResult<()> {
                         };
                         row.push(dummy_data);
                     }
+                    //println!("{:?}", row);
                     columngroup.insert_row(row)?;
+                    //println!("Row: {:?}", columngroup.columns);
                 }
             }
         }
@@ -77,17 +82,19 @@ pub fn print_database(database: &Database) -> DBResult<()> {
             println!("  Table: {}", table_name);
             for (columngroup_name, columngroup) in &table.fields {
                 println!("    ColumnGroup: {}", columngroup_name);
-                for (column_name, datatype) in &columngroup.feilds {
-                    print!("      Column: {}", column_name);
-                    match datatype {
-                        Datatypes::Strings(value) => println!(" Value: {}", value),
-                        Datatypes::Integers(value) => println!(" Value: {}", value),
-                        Datatypes::UIntegers(value) => println!(" Value: {}", value),
-                        Datatypes::Floats(value) => println!(" Value: {}", value),
-                        Datatypes::Doubles(value) => println!(" Value: {}", value),
-                        Datatypes::Booleans(value) => println!(" Value: {}", value),
-                        Datatypes::BigIntegers(value) => println!(" Value: {}", value),
-                        Datatypes::BigUIntegers(value) => println!(" Value: {}", value),
+                for (column_index, column) in columngroup.columns.iter().enumerate() {
+                    println!("      Column: {}", column_index);
+                    for datatype in column {
+                        match datatype {
+                            Datatypes::Strings(value) => println!("        Value: {}", value),
+                            Datatypes::Integers(value) => println!("        Value: {}", value),
+                            Datatypes::UIntegers(value) => println!("        Value: {}", value),
+                            Datatypes::Floats(value) => println!("        Value: {}", value),
+                            Datatypes::Doubles(value) => println!("        Value: {}", value),
+                            Datatypes::Booleans(value) => println!("        Value: {}", value),
+                            Datatypes::BigIntegers(value) => println!("        Value: {}", value),
+                            Datatypes::BigUIntegers(value) => println!("        Value: {}", value),
+                        }
                     }
                 }
             }
